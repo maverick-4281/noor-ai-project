@@ -1,38 +1,63 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import apiRoutes from './routes/apiRoutes.js';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import apiRoutes from "./routes/apiRoutes.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Allow requests from any origin (needed for Vercel frontend -> Vercel backend)
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id']
-}));
+// ✅ CORS FIX (important)
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://noor-ai-project-qdksbrpx3-maverick-4281s-projects.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
+    credentials: true,
+  })
+);
 
-// Increase payload limit for Base64 images
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// ✅ Handle preflight requests explicitly (important for Vercel)
+app.options("*", cors());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/noor-ai')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// ✅ Body parser
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-app.use('/api', apiRoutes);
+// ✅ MongoDB connection (safe for serverless)
+let isConnected = false;
 
-// Only start a local HTTP server when NOT on Vercel (serverless)
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Noor AI Server running on http://localhost:${PORT}`);
-  });
-}
+const connectDB = async () => {
+  if (isConnected) return;
 
-// Export for Vercel serverless
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    isConnected = conn.connections[0].readyState === 1;
+    console.log("MongoDB connected");
+  } catch (err) {
+    console.error("MongoDB error:", err);
+  }
+};
+
+// Connect before handling requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// ✅ Routes
+app.use("/api", apiRoutes);
+
+// ✅ Health check route (VERY useful for debugging)
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
+// ❌ DO NOT use app.listen on Vercel
+// Vercel handles server automatically
+
 export default app;
