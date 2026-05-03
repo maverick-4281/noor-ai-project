@@ -3,61 +3,70 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import apiRoutes from "./routes/apiRoutes.js";
+import { connectDB } from "./db.js";
 
 dotenv.config();
 
 const app = express();
 
-// ✅ CORS FIX (important)
+const defaultOrigins = ["http://localhost:5173"];
+const envOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : [];
+const allowedOrigins = [...defaultOrigins, ...envOrigins];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://noor-ai-project-qdksbrpx3-maverick-4281s-projects.vercel.app"
-    ],
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(null, false);
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
     credentials: true,
   })
 );
 
-// ✅ Handle preflight requests explicitly (important for Vercel)
 app.options("*", cors());
 
-// ✅ Body parser
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// ✅ MongoDB connection (safe for serverless)
-let isConnected = false;
-
-const connectDB = async () => {
-  if (isConnected) return;
-
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    isConnected = conn.connections[0].readyState === 1;
-    console.log("MongoDB connected");
-  } catch (err) {
-    console.error("MongoDB error:", err);
-  }
-};
-
-// Connect before handling requests
-app.use(async (req, res, next) => {
-  await connectDB();
-  next();
+app.get("/", (req, res) => {
+  res.status(200).send("Backend is running 🚀");
 });
 
-// ✅ Routes
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    mongoConfigured: Boolean(process.env.MONGODB_URI),
+    mongoReadyState: mongoose.connection.readyState,
+  });
+});
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    next(err);
+  }
+});
+
 app.use("/api", apiRoutes);
 
-// ✅ Health check route (VERY useful for debugging)
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
 });
 
-// ❌ DO NOT use app.listen on Vercel
-// Vercel handles server automatically
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  if (res.headersSent) return;
+  res.status(500).json({ error: "Internal server error" });
+});
 
 export default app;
