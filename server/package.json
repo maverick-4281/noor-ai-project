@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
+    "build": "node --check server.js && node --check routes/apiRoutes.js && node --check controllers/aiController.js && node --check controllers/chatController.js && node --check controllers/galleryController.js && node --check models/Chat.js && node --check models/Image.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

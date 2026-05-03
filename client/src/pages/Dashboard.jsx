@@ -22,9 +22,9 @@ export default function Dashboard() {
         .then(res => setCurrentMessages(res.data.messages))
         .catch(err => console.error("Error loading chat messages", err));
     } else {
-      setCurrentMessages([]);
+      Promise.resolve().then(() => setCurrentMessages([]));
     }
-  }, [currentChatId]);
+  }, [currentChatId, headers]);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

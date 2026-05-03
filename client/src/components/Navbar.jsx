@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Sun, Moon, Image as ImageIcon, LogOut, User } from 'lucide-react';
+import { Sun, Moon, Image as ImageIcon, LogOut } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function Navbar() {
