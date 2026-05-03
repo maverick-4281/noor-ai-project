@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode Variables */
+    --color-background: #E5E5E5; /* Alabaster */
+    --color-surface: #FFFFFF;
+    --color-accent: #FCA311; /* Gold Spark */
+    --color-text-main: #1A1A1A; /* Graphite */
+  }
+
+  .dark {
+    /* Dark Mode Variables */
+    --color-background: #14213D; /* Midnight Navy */
+    --color-surface: #000000; /* Deep Charcoal */
+    --color-accent: #FCA311; /* Gold Spark */
+    --color-text-main: #F8F9FA; /* Off-White */
+  }
+
+  body {
+    @apply bg-background text-textMain transition-colors duration-300 antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-surface border-2 border-background rounded-full;
+}
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-surface border-background;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-accent;
+}
