@@ -50,7 +50,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use(async (req, res, next) => {
+// Only API data routes need MongoDB. A global DB middleware breaks /favicon.ico etc. on Vercel.
+app.use("/api", async (req, res, next) => {
+  if (req.path === "/health") return next();
   try {
     await connectDB();
     next();
