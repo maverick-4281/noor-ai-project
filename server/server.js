@@ -9,7 +9,10 @@ dotenv.config();
 
 const app = express();
 
-const defaultOrigins = ["http://localhost:5173"];
+const defaultOrigins = [
+  "http://localhost:5173",
+  "https://noor-ai-project-eight.vercel.app",
+];
 const envOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",")
       .map((s) => s.trim())
